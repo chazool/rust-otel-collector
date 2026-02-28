@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rust-otel-collector-app
+    environment:
+      PORT: "8080"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_ENDPOINT: http://otel-collector:4317
+      SERVICE_NAME: rust-otel-collector
+      SERVICE_VERSION: "0.1.0"
+      ENVIRONMENT: development
+    ports:
+      - "8080:8080"
+    depends_on:
+      - otel-collector
+    networks:
+      - rust-otel-network
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "14317:4317"  # OTLP gRPC (host 14317 to avoid conflict with host 4317)
+      - "14318:4318"  # OTLP HTTP
+      - "9090:9090"   # Prometheus metrics
+    depends_on:
+      - jaeger
+    networks:
+      - rust-otel-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"   # Jaeger agent
+      - "16686:16686"     # Jaeger Web UI
+      - "14268:14268"     # HTTP collector
+      - "4317:4317"       # OTLP gRPC (all-in-one supports OTLP)
+    networks:
+      - rust-otel-network
+
+networks:
+  rust-otel-network:
+    driver: bridge

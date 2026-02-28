@@ -1,0 +1,257 @@
+{
+	"info": {
+		"_postman_id": "rust-otel-collector-api-v1",
+		"name": "Rust OTEL Collector API",
+		"description": "API collection for rust-otel-collector: Health, Products (CRUD), Items (CRUD). Product has many Items. Set base_url to e.g. http://localhost:8080/api/v1",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:8080/api/v1" },
+		{ "key": "product_id", "value": "" },
+		{ "key": "item_id", "value": "" }
+	],
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Liveness",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/livez",
+							"host": ["{{base_url}}"],
+							"path": ["livez"]
+						},
+						"description": "Check if the service is alive."
+					}
+				},
+				{
+					"name": "Readiness",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/readyz",
+							"host": ["{{base_url}}"],
+							"path": ["readyz"]
+						},
+						"description": "Check if the service is ready to accept traffic."
+					}
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "List Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["products"]
+						},
+						"description": "List all products."
+					}
+				},
+				{
+					"name": "Get Product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["products", "{{product_id}}"]
+						},
+						"description": "Get product by ID. Set product_id in collection/env."
+					}
+				},
+				{
+					"name": "Create Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const json = pm.response.json();",
+									"    if (json.id) pm.collectionVariables.set('product_id', json.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Sample Product\",\n  \"description\": \"Product description\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["products"]
+						},
+						"description": "Create a product. Saves product_id to collection variable on success."
+					}
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Product Name\",\n  \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["products", "{{product_id}}"]
+						},
+						"description": "Update product by ID. Optional fields: name, description."
+					}
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/{{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["products", "{{product_id}}"]
+						},
+						"description": "Delete product. Returns 409 if product has items."
+					}
+				},
+				{
+					"name": "List Items by Product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/{{product_id}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["products", "{{product_id}}", "items"]
+						},
+						"description": "List all items for a product."
+					}
+				}
+			]
+		},
+		{
+			"name": "Items",
+			"item": [
+				{
+					"name": "List Items",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["items"]
+						},
+						"description": "List all items."
+					}
+				},
+				{
+					"name": "List Items by product_id (query)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/items?product_id={{product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["items"],
+							"query": [{"key": "product_id", "value": "{{product_id}}"}]
+						},
+						"description": "List items filtered by product_id."
+					}
+				},
+				{
+					"name": "Get Item",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/items/{{item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["items", "{{item_id}}"]
+						},
+						"description": "Get item by ID. Set item_id in collection/env."
+					}
+				},
+				{
+					"name": "Create Item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const json = pm.response.json();",
+									"    if (json.id) pm.collectionVariables.set('item_id', json.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Sample Item\",\n  \"description\": \"Item description\",\n  \"price\": 9.99,\n  \"product_id\": \"{{product_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/items",
+							"host": ["{{base_url}}"],
+							"path": ["items"]
+						},
+						"description": "Create an item. Requires valid product_id. Saves item_id to collection variable on success."
+					}
+				},
+				{
+					"name": "Update Item",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Item Name\",\n  \"description\": \"Updated description\",\n  \"price\": 19.99\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/items/{{item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["items", "{{item_id}}"]
+						},
+						"description": "Update item by ID. Optional fields: name, description, price, product_id."
+					}
+				},
+				{
+					"name": "Delete Item",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/items/{{item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["items", "{{item_id}}"]
+						},
+						"description": "Delete item by ID."
+					}
+				}
+			]
+		}
+	]
+}
