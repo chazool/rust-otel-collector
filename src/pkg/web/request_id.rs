@@ -8,6 +8,7 @@ use axum::{
     response::Response,
 };
 use tracing::info_span;
+use tracing_opentelemetry::OpenTelemetrySpanExt;
 use uuid::Uuid;
 
 pub const REQUEST_ID_HEADER: &str = "x-request-id";
@@ -24,6 +25,10 @@ pub async fn request_id_middleware(request: Request, next: Next) -> Response {
         http.method = %method,
         http.route = %path,
     );
+    // Export request_id and HTTP fields as OTEL span attributes for Jaeger
+    span.set_attribute("request_id", request_id.to_string());
+    span.set_attribute("http.method", method.clone());
+    span.set_attribute("http.route", path.clone());
     let _guard = span.enter();
 
     tracing::info!(
