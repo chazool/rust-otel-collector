@@ -1,6 +1,7 @@
 use crate::app::handler::{healths, items, products};
 use crate::app::state::AppState;
-use axum::{routing::get, Router};
+use crate::pkg::web::request_id_middleware;
+use axum::{middleware, routing::get, Router};
 use tracing::debug;
 
 pub fn get_routes() -> Router {
@@ -26,7 +27,8 @@ pub fn get_routes() -> Router {
                 .put(items::update_item)
                 .delete(items::delete_item),
         )
-        .with_state(state);
+        .with_state(state)
+        .layer(middleware::from_fn(request_id_middleware));
 
     debug!("get_routes end");
     Router::new().nest("/api/v1", routes)

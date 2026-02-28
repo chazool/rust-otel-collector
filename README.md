@@ -7,6 +7,8 @@ A Rust service with **OpenTelemetry (OTEL) Collector** and **Jaeger** integratio
 - **OTEL Collector**: Receives traces and metrics via OTLP (gRPC on 4317, HTTP on 4318) and forwards traces to Jaeger and metrics to Prometheus
 - **Jaeger**: All-in-one backend for trace storage and the Jaeger Web UI
 - **Structured tracing**: `tracing` + `tracing-opentelemetry` with JSON logs and OTLP export
+- **Request ID**: Every request gets a unique ID (from `X-Request-Id` header or generated). It is attached to the trace span and to the response header so you can correlate logs and Jaeger traces by the same ID
+- **Structured logs**: JSON logs with `request_id`, `method`, `path`, and span context (handler/service/repo); "request started" and "request completed" log lines include `request_id` and `status`
 - **Health endpoints**: `/api/v1/livez`, `/api/v1/readyz`
 - **Sample API**: Product and Item CRUD (one-to-many: Product has many Items). In-memory store, handler → service → repository layers, OTEL tracing on all endpoints
 - **Config via env**: Port, OTEL endpoint, service name/version
@@ -27,7 +29,7 @@ src/
 └── pkg/
     ├── config/          # App config (env-based)
     ├── tracing/         # OTEL tracer + meter, tracing-subscriber
-    └── web/             # Axum server init
+    └── web/             # Axum server init, request_id middleware
 ```
 
 ## Prerequisites
@@ -63,6 +65,15 @@ docker compose up --build
 - **OTEL Collector**: OTLP gRPC 4317, HTTP 4318; Prometheus metrics on 9090  
 
 The app is configured with `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317` so traces and metrics go to the collector, which forwards traces to Jaeger and exposes metrics for Prometheus.
+
+## Request ID and correlating logs with traces
+
+Each request gets a **request ID**: from the `X-Request-Id` header if the client sends it, otherwise a new UUID. The ID is:
+
+- Set on the **request** span (`request_id`, `http.method`, `http.route`) so it appears in **Jaeger** on the root span and in **structured JSON logs** (span context)
+- Sent back in the **response header** `X-Request-Id`
+
+Use the same ID to find the trace in Jaeger and to grep logs (e.g. `jq '.fields.request_id'` or search for the ID in your log aggregator). The middleware logs `"request started"` and `"request completed"` with `request_id`, `method`, `path`, and `status`.
 
 ## Environment variables
 
