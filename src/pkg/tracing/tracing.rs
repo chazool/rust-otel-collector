@@ -100,7 +100,9 @@ pub fn init_tracing_subscriber() -> OtelGuard {
     let tracer_provider = init_tracer_provider(config.otel_endpoint.clone());
     let meter_provider = init_meter_provider();
 
-    let tracer = tracer_provider.tracer(config.service_name.clone());
+    // Use empty scope name so Jaeger shows span names only (e.g. "request", "handler.get_product")
+    // instead of "rust_otel_collector:request". Service identity is already in the resource (service.name).
+    let tracer = tracer_provider.tracer("");
 
     tracing_subscriber::registry()
         .with(tracing_subscriber::filter::LevelFilter::from_level(Level::INFO))

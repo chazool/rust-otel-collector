@@ -1,6 +1,7 @@
 use crate::app::dto::item::{CreateItemRequest, UpdateItemRequest};
 use crate::app::state::AppState;
 use crate::app::service::item_service;
+use crate::pkg::web::RequestId;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -17,6 +18,7 @@ pub struct ListItemsQuery {
 
 #[instrument(skip(state), name = "handler.get_item", fields(item_id = %id))]
 pub async fn get_item(
+    request_id: RequestId,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -28,6 +30,7 @@ pub async fn get_item(
 
 #[instrument(skip(state), name = "handler.list_items_by_product", fields(product_id = %product_id))]
 pub async fn list_items_by_product(
+    request_id: RequestId,
     State(state): State<AppState>,
     Path(product_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -37,6 +40,7 @@ pub async fn list_items_by_product(
 
 #[instrument(skip(state), name = "handler.list_items")]
 pub async fn list_items(
+    request_id: RequestId,
     State(state): State<AppState>,
     Query(query): Query<ListItemsQuery>,
 ) -> impl IntoResponse {
@@ -49,6 +53,7 @@ pub async fn list_items(
 
 #[instrument(skip(state, body), name = "handler.create_item")]
 pub async fn create_item(
+    request_id: RequestId,
     State(state): State<AppState>,
     Json(body): Json<CreateItemRequest>,
 ) -> impl IntoResponse {
@@ -64,6 +69,7 @@ pub async fn create_item(
 
 #[instrument(skip(state, body), name = "handler.update_item", fields(item_id = %id))]
 pub async fn update_item(
+    request_id: RequestId,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateItemRequest>,
@@ -80,6 +86,7 @@ pub async fn update_item(
 
 #[instrument(skip(state), name = "handler.delete_item", fields(item_id = %id))]
 pub async fn delete_item(
+    request_id: RequestId,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {

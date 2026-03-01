@@ -1,35 +1,51 @@
-//! Request ID middleware: extract or generate a request ID, attach to tracing span and response header
-//! so traces and structured logs can be correlated by the same ID.
+//! Request ID middleware: extract or generate a request ID, store in request extensions,
+//! attach to response header and logs. Handlers use the RequestId extractor to add request_id
+//! to the current span (Jaeger tags). No root span here so the handler span is the trace root.
 
 use axum::{
-    extract::Request,
-    http::{header::HeaderName, HeaderValue},
+    extract::{FromRequestParts, Request},
+    http::{header::HeaderName, HeaderValue, request::Parts, StatusCode},
     middleware::Next,
     response::Response,
 };
-use tracing::info_span;
-use tracing_opentelemetry::OpenTelemetrySpanExt;
+use tracing;
 use uuid::Uuid;
 
 pub const REQUEST_ID_HEADER: &str = "x-request-id";
 
-/// Returns the request ID from the request (header or generated) and sets a span + response header.
-pub async fn request_id_middleware(request: Request, next: Next) -> Response {
+/// Stored in request extensions by middleware. Use as extractor; #[instrument] records it as a span field (visible in Jaeger).
+#[derive(Clone, Copy, Debug)]
+pub struct RequestId(pub Uuid);
+
+impl std::fmt::Display for RequestId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<S> FromRequestParts<S> for RequestId
+where
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<RequestId>()
+            .copied()
+            .ok_or((StatusCode::INTERNAL_SERVER_ERROR, "missing request_id"))
+    }
+}
+
+/// Returns the request ID from the request (header or generated), adds it to extensions and response header,
+/// and logs it. Handlers use RequestId extractor to add request_id to the span for Jaeger.
+pub async fn request_id_middleware(mut request: Request, next: Next) -> Response {
     let request_id = extract_or_generate_request_id(&request);
     let method = request.method().to_string();
     let path = request.uri().path().to_string();
 
-    let span = info_span!(
-        "request",
-        request_id = %request_id,
-        http.method = %method,
-        http.route = %path,
-    );
-    // Export request_id and HTTP fields as OTEL span attributes for Jaeger
-    span.set_attribute("request_id", request_id.to_string());
-    span.set_attribute("http.method", method.clone());
-    span.set_attribute("http.route", path.clone());
-    let _guard = span.enter();
+    request.extensions_mut().insert(RequestId(request_id));
 
     tracing::info!(
         request_id = %request_id,

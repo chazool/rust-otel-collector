@@ -1,4 +1,5 @@
 use crate::app::service::healths as health_service;
+use crate::pkg::web::RequestId;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use tracing::{debug, instrument};
 
@@ -7,7 +8,7 @@ use tracing::{debug, instrument};
 /// Returns the liveness status of the service. This endpoint should always return 200 OK
 /// if the service is running, regardless of its internal state.
 #[instrument(name = "handler.livez")]
-pub async fn livez() -> impl IntoResponse {
+pub async fn livez(request_id: RequestId) -> impl IntoResponse {
     debug!("livez start");
     let res = health_service::livez();
     debug!(message = "livez end", res = ?res);
@@ -16,7 +17,7 @@ pub async fn livez() -> impl IntoResponse {
 
 /// Check service readiness.
 #[instrument(name = "handler.readyz")]
-pub async fn readyz() -> impl IntoResponse {
+pub async fn readyz(request_id: RequestId) -> impl IntoResponse {
     debug!("readyz start");
     let res = health_service::readyz();
     debug!(message = "readyz end", res = ?res);
