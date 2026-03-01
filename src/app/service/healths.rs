@@ -1,6 +1,5 @@
 use crate::app::dto::healths::{LivezResponse, ReadyzResponse};
 
-/// Health service: liveness and readiness business logic.
 pub fn livez() -> LivezResponse {
     LivezResponse { status: true }
 }

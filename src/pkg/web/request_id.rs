@@ -1,6 +1,4 @@
-//! Request ID middleware: extract or generate a request ID, store in request extensions,
-//! attach to response header and logs. Handlers use the RequestId extractor to add request_id
-//! to the current span (Jaeger tags). No root span here so the handler span is the trace root.
+//! Request ID middleware: extract or generate ID, store in extensions, set response header, log.
 
 use axum::{
     extract::{FromRequestParts, Request},
@@ -13,7 +11,7 @@ use uuid::Uuid;
 
 pub const REQUEST_ID_HEADER: &str = "x-request-id";
 
-/// Stored in request extensions by middleware. Use as extractor; #[instrument] records it as a span field (visible in Jaeger).
+/// Stored in request extensions; use as extractor so #[instrument] records it on the span.
 #[derive(Clone, Copy, Debug)]
 pub struct RequestId(pub Uuid);
 
@@ -38,8 +36,7 @@ where
     }
 }
 
-/// Returns the request ID from the request (header or generated), adds it to extensions and response header,
-/// and logs it. Handlers use RequestId extractor to add request_id to the span for Jaeger.
+/// Extract or generate request ID, insert into extensions, set response header, log start/complete.
 pub async fn request_id_middleware(mut request: Request, next: Next) -> Response {
     let request_id = extract_or_generate_request_id(&request);
     let method = request.method().to_string();

@@ -1,4 +1,3 @@
-// Repository layer: in-memory data access.
 pub mod item_repository;
 pub mod product_repository;
 

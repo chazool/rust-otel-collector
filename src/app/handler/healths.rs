@@ -3,10 +3,7 @@ use crate::pkg::web::RequestId;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use tracing::{debug, instrument};
 
-/// Check service liveness.
-///
-/// Returns the liveness status of the service. This endpoint should always return 200 OK
-/// if the service is running, regardless of its internal state.
+/// Liveness probe; returns 200 if the service is running.
 #[instrument(name = "handler.livez")]
 pub async fn livez(request_id: RequestId) -> impl IntoResponse {
     debug!("livez start");
@@ -15,7 +12,7 @@ pub async fn livez(request_id: RequestId) -> impl IntoResponse {
     (StatusCode::OK, Json(res))
 }
 
-/// Check service readiness.
+/// Readiness probe.
 #[instrument(name = "handler.readyz")]
 pub async fn readyz(request_id: RequestId) -> impl IntoResponse {
     debug!("readyz start");

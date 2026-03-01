@@ -47,7 +47,6 @@ fn resource() -> Resource {
 
 pub fn init_meter_provider() -> SdkMeterProvider {
     let config = app_config::get_config();
-    // Keep full URI so tonic uses plaintext for http:// and TLS for https://
     let endpoint = config.otel_endpoint.clone();
 
     let exporter = opentelemetry_otlp::MetricExporter::builder()
@@ -76,7 +75,6 @@ pub fn init_meter_provider() -> SdkMeterProvider {
 }
 
 pub fn init_tracer_provider(otel_endpoint: String) -> SdkTracerProvider {
-    // Keep full URI so tonic uses plaintext for http:// and TLS for https://
     let endpoint = otel_endpoint;
 
     let exporter = opentelemetry_otlp::SpanExporter::builder()
@@ -100,8 +98,6 @@ pub fn init_tracing_subscriber() -> OtelGuard {
     let tracer_provider = init_tracer_provider(config.otel_endpoint.clone());
     let meter_provider = init_meter_provider();
 
-    // Use empty scope name so Jaeger shows span names only (e.g. "request", "handler.get_product")
-    // instead of "rust_otel_collector:request". Service identity is already in the resource (service.name).
     let tracer = tracer_provider.tracer("");
 
     tracing_subscriber::registry()
